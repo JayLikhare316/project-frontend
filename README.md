@@ -1,33 +1,78 @@
-# Installing MariaDB, Setting Password, and Importing Database on Ubuntu Linux
+# Angular Project Setup Guide
 
-This guide will walk you through the process of installing MariaDB on Ubuntu Linux, setting a password, and importing a database from a SQL file. MariaDB is a popular open-source relational database management system, and it's commonly used in web development environments.
+This guide provides step-by-step instructions for setting up an Angular project from scratch on an Ubuntu machine.
 
-## Setup MariaDB and Import MySQL
-
-Before installing any new software, it's essential to update the package lists to ensure you're getting the latest versions available.
+## Step 1: Install Node.js and npm
 
 ```bash
 sudo apt update
-sudo apt install mariadb-server
-sudo systemctl start mariadb
-sudo systemctl enable mariadb
-sudo mysql_secure_installation
-sudo mysql -u root -p
+sudo apt install nodejs npm
 ```
-```sql
-CREATE DATABASE springbackend;
-GRANT ALL PRIVILEGES ON springbackend.* TO 'username'@'localhost' IDENTIFIED BY 'your_password';
-```
+## Step 2: Check Node.js and npm versions
 
-### Import Database from SQL File
 ```bash
-sudo mysql -u username -p springbackend < springbackend.sql
+node -v
+npm -v
 ```
+## Step 3: Install Angular CLI globally
 ```bash
-sudo mysql -u root -p
+sudo npm install -g @angular/cli@14.2.1
 ```
-```sql
-show databases;
-show tables;
-select * from tbl_workers;
+## Step 4: Verify Angular CLI installation
+```bash
+ng --version
 ```
+## Step 5: Install project dependencies (if needed)
+
+```bash
+npm install
+ng build 
+cd dist/angular-frontend
+ng serve --host 0.0.0.0 --port=80
+```
+## Step 5: Deploy the artifact
+Transfer the contents of the dist/ directory to your server or hosting provider to make your Angular application available to users.
+
+
+# Angular Project Dockerization Guide
+
+This guide provides step-by-step instructions for Dockerizing an existing Angular project. Docker allows you to package your Angular application into a container, making it portable and easily deployable across different environments.
+
+## Prerequisites
+
+- Docker installed on your system. You can download and install Docker Desktop from [here](https://docs.docker.com/engine/install/).
+
+## Dockerfile Setup
+
+Create a `Dockerfile` in the root directory of your Angular project with the following content:
+
+```Dockerfile
+# Use official Node.js image as the base image
+FROM node:14-alpine as build
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Copy package.json and package-lock.json (if available)
+COPY package*.json ./
+
+# Install project dependencies
+RUN npm install
+
+# Copy the rest of the application code
+COPY . .
+
+# Build the Angular application
+RUN npm run build 
+
+# Use NGINX as the production server
+FROM nginx:alpine
+
+# Copy the built artifact from the previous stage to NGINX web server directory
+COPY --from=build /usr/src/app/dist/angular-frontend /usr/share/nginx/html
+
+# Expose port 80 to the outside world
+EXPOSE 80
+
+# Start NGINX server when the container starts
+CMD ["nginx", "-g", "daemon off;"]
